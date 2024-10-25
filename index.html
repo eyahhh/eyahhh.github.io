@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Links Spotify</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #generatedLinks {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerador de Links Spotify</h1>
+    <label for="numCodes">Quantos links você deseja gerar?</label>
+    <input type="number" id="numCodes" min="1" required>
+    <button id="generateBtn">Gerar Links</button>
+    <button id="downloadBtn" style="display: none;">Baixar Links</button>
+
+    <div id="generatedLinks"></div>
+
+    <script>
+        let generatedLinksArray = [];
+
+        function generateRandomString() {
+            const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let code = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                code += characters[randomIndex];
+            }
+            
+            code += '-';
+            
+            for (let i = 0; i < 5; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                code += characters[randomIndex];
+            }
+            
+            return code;
+        }
+
+        function generateSpotifyCodes() {
+            const numCodes = document.getElementById('numCodes').value;
+            const generatedLinksContainer = document.getElementById('generatedLinks');
+            generatedLinksArray = []; // Limpa o array de links gerados
+
+            // Limpa a área de resultados anteriores
+            generatedLinksContainer.innerHTML = '';
+
+            if (numCodes <= 0 || isNaN(numCodes)) {
+                alert('Por favor, insira um número válido.');
+                return;
+            }
+
+            // Gera os códigos e cria as URLs
+            for (let i = 0; i < numCodes; i++) {
+                const code = generateRandomString();
+                const url = `https://www.spotify.com/br-pt/ppt/microsoft/?code=${code}`;
+                generatedLinksArray.push(url); // Armazena o link gerado
+
+                // Cria um elemento <a> para exibir cada link gerado
+                const linkElement = document.createElement('a');
+                linkElement.href = url;
+                linkElement.textContent = url;
+                linkElement.target = '_blank';
+                linkElement.style.display = 'block'; // Para exibir cada link em uma nova linha
+
+                // Adiciona o link à área de resultados
+                generatedLinksContainer.appendChild(linkElement);
+            }
+
+            // Exibe o botão de download
+            document.getElementById('downloadBtn').style.display = 'block';
+        }
+
+        function downloadLinks() {
+            const blob = new Blob([generatedLinksArray.join('\n')], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'links.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url); // Libera a URL
+        }
+
+        // Adiciona eventos aos botões
+        document.getElementById('generateBtn').addEventListener('click', generateSpotifyCodes);
+        document.getElementById('downloadBtn').addEventListener('click', downloadLinks);
+    </script>
+</body>
+</html>
