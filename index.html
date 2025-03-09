@@ -3,136 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Links Spotify</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Botão de Download</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #121212; /* Fundo preto */
-            color: #ffffff; /* Texto padrão branco */
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            flex-direction: column;
-        }
-        h1 {
-            text-align: center;
-            color: #000000; /* Texto do título em preto */
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.5);
-        }
-        .container {
-            background: linear-gradient(135deg, #1DB954, #1ed760); /* Gradiente verde */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            background-color: #333; /* Fundo do input */
-            color: #ffffff; /* Texto do input */
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #1DB954; /* Verde do Spotify */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        .btn-download {
+            display: inline-block;
+            padding: 12px 20px;
             font-size: 16px;
-            transition: background-color 0.3s, transform 0.2s;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.3s;
         }
-        button:hover {
-            background-color: #1aa34a; /* Tom mais escuro ao passar o mouse */
-            transform: scale(1.05); /* Aumenta levemente o botão */
-        }
-        #downloadBtn {
-            display: none; /* Inicialmente escondido */
+        .btn-download:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1><i class="fab fa-spotify"></i> Gerador de Links Spotify</h1>
-        <label for="numCodes">Quantos links você deseja gerar?</label>
-        <input type="number" id="numCodes" min="1" required>
-        <button id="generateBtn">Gerar Links</button>
-        <button id="downloadBtn">Baixar Links</button>
-    </div>
-
-    <script>
-        let generatedLinksArray = [];
-
-        function generateRandomString() {
-            const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let code = '';
-
-            for (let i = 0; i < 5; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                code += characters[randomIndex];
-            }
-
-            code += '-';
-
-            for (let i = 0; i < 5; i++) {
-                const randomIndex = Math.floor(Math.random() * characters.length);
-                code += characters[randomIndex];
-            }
-
-            return code;
-        }
-
-        function generateSpotifyCodes() {
-            const numCodes = document.getElementById('numCodes').value;
-            generatedLinksArray = []; // Limpa o array de links gerados
-
-            if (numCodes <= 0 || isNaN(numCodes)) {
-                alert('Por favor, insira um número válido.');
-                return;
-            }
-
-            // Gera os códigos e cria as URLs
-            for (let i = 0; i < numCodes; i++) {
-                const code = generateRandomString();
-                const url = `https://www.spotify.com/br-pt/ppt/microsoft/?code=${code}`;
-                generatedLinksArray.push(url); // Armazena o link gerado
-            }
-
-            // Exibe o botão de download
-            document.getElementById('downloadBtn').style.display = 'block';
-        }
-
-        function downloadLinks() {
-            const blob = new Blob([generatedLinksArray.join('\n')], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'links.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Libera a URL
-        }
-
-        // Adiciona eventos aos botões
-        document.getElementById('generateBtn').addEventListener('click', generateSpotifyCodes);
-        document.getElementById('downloadBtn').addEventListener('click', downloadLinks);
-    </script>
+    <a href="https://drive.usercontent.google.com/download?id=1-15BDf7nPhZeAUPR6lbXg-kKegQTI709&export=download&authuser=0" class="btn-download">
+        Baixar Arquivo
+    </a>
 </body>
 </html>
