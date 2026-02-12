@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Key, Product } from '../types';
-import { Clock, Box, Copy, Check, Loader2, Sparkles, X } from 'lucide-react';
+import { Clock, Box, Copy, Check, Loader2, Sparkles, X, Gift, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface UserDashboardProps {
@@ -16,163 +16,155 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ activeKey, products, onLo
   const [generatedAccount, setGeneratedAccount] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
+  const COOLDOWN_TIME = 30000;
+
+  useEffect(() => {
+    const lastGen = localStorage.getItem('nexus_last_gen');
+    if (lastGen) {
+      const remaining = parseInt(lastGen) + COOLDOWN_TIME - Date.now();
+      if (remaining > 0) setCooldown(Math.ceil(remaining / 1000));
+    }
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       const diff = activeKey.expiresAt - Date.now();
       if (diff <= 0) {
-        setTimeLeft('Expirado');
+        setTimeLeft('EXPIRADO');
         return;
       }
+      const seconds = Math.floor((diff / 1000) % 60);
       const minutes = Math.floor((diff / 1000 / 60) % 60);
       const hours = Math.floor(diff / (1000 * 60 * 60));
-      setTimeLeft(`${hours > 0 ? hours + 'h ' : ''}${minutes}m`);
+      
+      if (hours > 100000) setTimeLeft('ILIMITADO');
+      else setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
     }, 1000);
-    return () => clearInterval(timer);
-  }, [activeKey]);
+
+    let cooldownTimer: any;
+    if (cooldown > 0) {
+      cooldownTimer = setInterval(() => setCooldown((c) => (c > 0 ? c - 1 : 0)), 1000);
+    }
+
+    return () => {
+      clearInterval(timer);
+      if (cooldownTimer) clearInterval(cooldownTimer);
+    };
+  }, [activeKey, cooldown]);
 
   const handleGenerate = async (productId: string) => {
-    if (generating) return;
+    if (generating || cooldown > 0) return;
     setGenerating(true);
     setGeneratedAccount(null);
     
     try {
-      const { data, error } = await supabase
-        .from('stock')
-        .select('*')
-        .eq('product_id', productId)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .single();
+      // CHAMADA SEGURA VIA RPC (DATABASE SIDE)
+      const { data, error } = await supabase.rpc('consume_stock', {
+        p_product_id: productId,
+        p_key_code: activeKey.code
+      });
 
-      if (error || !data) {
-        alert('Sem estoque disponível no momento.');
+      if (error) {
+        if (error.message.includes('SEM_ESTOQUE')) alert('Este serviço está sem estoque!');
+        else if (error.message.includes('KEY_INVALIDA')) alert('Sua key é inválida ou já foi usada!');
+        else throw error;
         return;
       }
 
-      const { error: deleteError } = await supabase.from('stock').delete().eq('id', data.id);
-      if (deleteError) throw deleteError;
-
-      setGeneratedAccount(data.content);
+      // Se sucesso, ativa o cooldown
+      localStorage.setItem('nexus_last_gen', Date.now().toString());
+      setCooldown(30);
+      setGeneratedAccount(data);
       await refreshData();
-    } catch (err) {
-      console.error(err);
-      alert('Erro técnico ao processar geração.');
+    } catch (err: any) {
+      alert('Erro no Servidor: ' + err.message);
     } finally {
       setGenerating(false);
     }
   };
 
-  const copyToClipboard = () => {
-    if (generatedAccount) {
-      navigator.clipboard.writeText(generatedAccount);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Sparkles className="text-blue-500 w-6 h-6" />
-            <h1 className="text-4xl font-extrabold tracking-tight">NEXUS GEN</h1>
+    <div className="max-w-6xl mx-auto px-6 py-12">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-16">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-600 rounded-lg shadow-lg">
+              <Sparkles className="text-white w-6 h-6" />
+            </div>
+            <h1 className="text-5xl font-black tracking-tighter text-white">NEXUS GEN</h1>
           </div>
-          <p className="text-gray-400 font-medium">Seu hub premium de acesso a streaming</p>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs ml-1">Secure Account Provisioning</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <div className="bg-[#111622] border border-gray-800 px-5 py-2.5 rounded-xl flex items-center space-x-2 text-blue-400 shadow-lg">
-            <Clock className="w-4 h-4" /> 
-            <span className="font-bold tabular-nums">{timeLeft}</span>
+        
+        <div className="flex items-center gap-4">
+          <div className="bg-[#111622] border border-gray-800 px-6 py-4 rounded-2xl flex items-center gap-4 shadow-xl">
+            <Clock className="w-5 h-5 text-blue-500" /> 
+            <div>
+              <p className="text-[10px] text-gray-500 font-black uppercase">Tempo de Sessão</p>
+              <span className="font-mono text-xl font-black text-blue-400">{timeLeft}</span>
+            </div>
           </div>
-          <button 
-            onClick={onLogout} 
-            className="bg-red-500/10 border border-red-500/20 px-5 py-2.5 rounded-xl text-red-500 hover:bg-red-500/20 transition-all font-bold"
-          >
-            Sair
+          <button onClick={onLogout} className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 hover:bg-red-500/20 transition-all font-black">
+            <X size={24} />
           </button>
         </div>
       </header>
 
       {generatedAccount && (
-        <div className="mb-12 animate-in slide-in-from-top-6 duration-500">
-          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-8 backdrop-blur-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Box size={80} />
+        <div className="mb-16 animate-in zoom-in duration-500">
+          <div className="bg-gradient-to-br from-[#111622] via-[#111622] to-blue-900/10 border border-blue-500/30 rounded-[32px] p-10 backdrop-blur-3xl shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></div>
+              <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.3em]">CONTA CONSUMIDA COM SUCESSO</h3>
             </div>
-            <h3 className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Check className="w-4 h-4" /> Conta Gerada com Sucesso
-            </h3>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <code className="text-2xl md:text-3xl font-mono text-white break-all flex-1 selection:bg-blue-500/40">
-                {generatedAccount}
-              </code>
-              <div className="flex gap-3 w-full md:w-auto">
+            
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex-1 w-full">
+                <code className="text-2xl md:text-3xl font-black font-mono text-white break-all block bg-[#0a0c14] border border-gray-800 p-6 rounded-2xl">
+                  {generatedAccount}
+                </code>
+              </div>
+              <div className="flex gap-4">
                 <button 
-                  onClick={copyToClipboard} 
-                  className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl transition-all font-bold shadow-lg shadow-blue-600/20"
+                  onClick={() => { navigator.clipboard.writeText(generatedAccount!); setCopied(true); setTimeout(() => setCopied(false), 2000); }} 
+                  className="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-2xl transition-all font-black shadow-2xl"
                 >
-                  {copied ? (
-                    <><Check className="w-5 h-5" /> Copiado!</>
-                  ) : (
-                    <><Copy className="w-5 h-5" /> Copiar Dados</>
-                  )}
+                  {copied ? 'COPIADO' : 'COPIAR'}
                 </button>
-                <button 
-                  onClick={() => setGeneratedAccount(null)} 
-                  className="px-4 py-4 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-                >
-                  <X className="text-gray-400" />
-                </button>
+                <button onClick={() => setGeneratedAccount(null)} className="px-6 py-5 bg-white/5 rounded-2xl border border-gray-800"><X /></button>
               </div>
             </div>
-            <p className="mt-4 text-xs text-gray-500 font-medium">Lembre-se: Não altere os dados da conta para manter a garantia.</p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {products.map((product) => (
-          <div 
-            key={product.id} 
-            className="group bg-[#111622] border border-gray-800/50 rounded-3xl p-6 flex flex-col hover:border-blue-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/5"
-          >
-            <div className="flex items-center space-x-5 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition-transform">
+          <div key={product.id} className="group bg-[#111622] border border-gray-800/80 rounded-[40px] p-8 flex flex-col hover:border-blue-500/40 transition-all hover:shadow-2xl">
+            <div className="flex items-center space-x-6 mb-10">
+              <div className="w-20 h-20 rounded-3xl bg-[#0a0c14] border border-gray-800 flex items-center justify-center text-4xl shadow-inner group-hover:scale-110 transition-transform">
                 {product.icon}
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold group-hover:text-blue-400 transition-colors">{product.name}</h3>
-                <p className="text-gray-500 text-sm flex items-center gap-1.5 mt-1 font-medium">
-                  <Box size={14} className="text-blue-500/60" /> 
-                  {product.stock.length} disponíveis
-                </p>
+              <div>
+                <h3 className="text-2xl font-black tracking-tight uppercase">{product.name}</h3>
+                <p className="text-gray-500 text-[10px] font-black uppercase mt-2">{product.stock.length} Disponíveis</p>
               </div>
             </div>
             
             <button
               onClick={() => handleGenerate(product.id)}
-              disabled={generating || product.stock.length === 0}
-              className="w-full py-3.5 bg-blue-600/10 hover:bg-blue-600 border border-blue-600/20 hover:border-blue-500 text-blue-400 hover:text-white disabled:bg-gray-800/50 disabled:text-gray-600 disabled:border-transparent rounded-2xl font-bold transition-all flex items-center justify-center gap-2 group-active:scale-95"
+              disabled={generating || product.stock.length === 0 || cooldown > 0}
+              className={`w-full py-5 rounded-[24px] font-black transition-all flex items-center justify-center gap-3 shadow-xl ${
+                cooldown > 0 ? 'bg-gray-800 text-gray-500 border border-gray-700' : 'bg-blue-600 hover:bg-blue-500 text-white'
+              }`}
             >
-              {generating ? (
-                <Loader2 className="animate-spin w-5 h-5" />
-              ) : product.stock.length === 0 ? (
-                'Esgotado'
-              ) : (
-                'Gerar Acesso'
-              )}
+              {generating ? <Loader2 className="animate-spin" /> : cooldown > 0 ? `COOLDOWN ${cooldown}S` : 'GERAR AGORA'}
             </button>
           </div>
         ))}
       </div>
-      
-      <footer className="mt-16 pt-8 border-t border-gray-800/50 text-center">
-        <p className="text-gray-600 text-sm font-medium">
-          © 2025 Nexus Gen • Sistema Premium de Gerenciamento
-        </p>
-      </footer>
     </div>
   );
 };

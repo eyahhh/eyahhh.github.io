@@ -16,6 +16,18 @@ export interface Key {
   code: string;
   expiresAt: number;
   createdAt: number;
+  used: boolean;
+  usedAt?: number;
+}
+
+export interface StockHistoryEntry {
+  id: string;
+  productId: string;
+  productName?: string;
+  productIcon?: string;
+  content: string;
+  keyUsed: string;
+  consumedAt: number;
 }
 
 export type ViewState = 'LOGIN' | 'DASHBOARD' | 'ADMIN';
