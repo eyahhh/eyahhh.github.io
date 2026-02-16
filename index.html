@@ -29,7 +29,6 @@
         background: #374151;
       }
       
-      /* Animações globais para evitar o efeito de "piscada" no carregamento */
       .animate-bounce-short {
         animation: bounce 1s ease-in-out;
       }
@@ -39,28 +38,24 @@
       }
     </style>
     
-    <!-- Configuração de Importação de Módulos -->
     <script type="importmap">
 {
   "imports": {
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0",
     "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.46.1",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/"
   }
 }
 </script>
     
-    <!-- Este script é o segredo para rodar .tsx direto no navegador -->
     <script type="module" src="https://esm.sh/run"></script>
   </head>
   <body>
     <div id="root"></div>
-    
-    <!-- Ponto de entrada do aplicativo -->
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
