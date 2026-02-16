@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Key, Product } from '../types';
+import { Key, Product } from '../types.ts';
 import { Clock, Box, Copy, Check, Loader2, Sparkles, X, Gift, AlertCircle } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.ts';
 
 interface UserDashboardProps {
   activeKey: Key;
@@ -60,7 +60,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ activeKey, products, onLo
     setGeneratedAccount(null);
     
     try {
-      // CHAMADA SEGURA VIA RPC (DATABASE SIDE)
       const { data, error } = await supabase.rpc('consume_stock', {
         p_product_id: productId,
         p_key_code: activeKey.code
@@ -73,7 +72,6 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ activeKey, products, onLo
         return;
       }
 
-      // Se sucesso, ativa o cooldown
       localStorage.setItem('nexus_last_gen', Date.now().toString());
       setCooldown(30);
       setGeneratedAccount(data);

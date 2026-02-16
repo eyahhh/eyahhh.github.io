@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Key, Product, StockHistoryEntry } from '../types';
+import { Key, Product, StockHistoryEntry } from '../types.ts';
 import { 
   Trash2, 
   ArrowLeft, 
@@ -23,7 +23,7 @@ import {
   FileText,
   Play
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.ts';
 
 interface AdminPanelProps {
   keys: Key[];
@@ -42,7 +42,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ keys, products, history, refres
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedSql, setCopiedSql] = useState(false);
   
-  // States for Creation
   const [keyTime, setKeyTime] = useState(24);
   const [expiryUnit, setExpiryUnit] = useState('hours');
   const [keyCount, setKeyCount] = useState(1);

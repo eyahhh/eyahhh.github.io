@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Key, Product, ViewState, ADMIN_KEY, StockHistoryEntry } from './types';
-import Login from './components/Login';
-import UserDashboard from './components/UserDashboard';
-import AdminPanel from './components/AdminPanel';
-import { supabase } from './lib/supabase';
+import { Key, Product, ViewState, ADMIN_KEY, StockHistoryEntry } from './types.ts';
+import Login from './components/Login.tsx';
+import UserDashboard from './components/UserDashboard.tsx';
+import AdminPanel from './components/AdminPanel.tsx';
+import { supabase } from './lib/supabase.ts';
 import { AlertTriangle, Database } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -23,7 +23,6 @@ const App: React.FC = () => {
     
     setDbError(null);
     try {
-      // 1. Fetch Products
       const { data: productsData, error: pError } = await supabase.from('products').select('*');
       if (pError) {
         if (pError.code === 'PGRST205') {
@@ -33,7 +32,6 @@ const App: React.FC = () => {
         throw pError;
       }
 
-      // 2. Fetch Stock
       const { data: stockData, error: sError } = await supabase.from('stock').select('product_id');
       if (sError) throw sError;
       
@@ -44,7 +42,6 @@ const App: React.FC = () => {
 
       setProducts(formattedProducts);
 
-      // 3. Fetch Keys
       const { data: keysData, error: kError } = await supabase.from('keys').select('*').order('created_at', { ascending: false });
       if (kError) throw kError;
 
@@ -54,7 +51,6 @@ const App: React.FC = () => {
         createdAt: new Date(k.created_at || Date.now()).getTime()
       })));
 
-      // 4. Fetch Audit History (Admin only usage)
       const { data: historyData, error: hError } = await supabase
         .from('stock_history')
         .select(`
@@ -138,6 +134,7 @@ const App: React.FC = () => {
   if (loading) return (
     <div className="min-h-screen bg-[#0a0c14] flex flex-col items-center justify-center gap-6">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
+      <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] animate-pulse">Carregando Nexus Engine...</p>
     </div>
   );
 
